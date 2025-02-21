@@ -40,8 +40,9 @@ if ("OTPCredential" in window) {
         otp: { transport: ["sms"] },
         signal: ac.signal,
       });
-
+      console.log(otp);
       if (otp) {
+        console.log(otp);
         input.value = otp.code;
         await navigator.clipboard.writeText(otp.code); // Copy OTP to clipboard
         if (form) form.submit();

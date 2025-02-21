@@ -25,7 +25,7 @@ async function fetchOTPFromClipboard() {
 // WebOTP API for automatic OTP fetching
 if ("OTPCredential" in window) {
   window.addEventListener("DOMContentLoaded", async () => {
-    const input = document.querySelector('input[autocomplete="one-time-code"]');
+    const input = document.querySelector("input.otp-input");
     if (!input) return;
 
     const ac = new AbortController();

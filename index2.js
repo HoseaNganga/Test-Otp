@@ -8,10 +8,23 @@ async function clearClipboard() {
   }
 }
 
+// Function to fetch OTP from clipboard and populate the input field
+/* async function fetchOTPFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && /^\d{4,6}$/.test(text.trim())) {
+      // Ensure it's a valid OTP format (4-6 digits)
+      document.getElementById("otp").value = text.trim();
+      console.log("OTP pasted from clipboard:", text.trim());
+    }
+  } catch (err) {
+    console.error("Clipboard read failed:", err);
+  }
+} */
+
 // WebOTP API for automatic OTP fetching
 if ("OTPCredential" in window) {
   window.addEventListener("DOMContentLoaded", async () => {
-    await navigator.clipboard.writeText("String of words");
     const input = document.querySelector("input.otp-input");
     if (!input) return;
 
@@ -44,17 +57,12 @@ if ("OTPCredential" in window) {
 
 // Clipboard Polling Function (to detect changes)
 let lastClipboardText = sessionStorage.getItem("kysok-otp") || ""; // Store last clipboard content
-console.log(`Immediately Below:${lastClipboardText}`);
 async function checkClipboardChanges() {
   try {
     const text = await navigator.clipboard.readText();
-    console.log(
-      `LastClipBoardText:${lastClipboardText}, ClipBoardText:${text}`
-    );
     if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
       lastClipboardText = text; // Update last clipboard text
       document.getElementById("otp").value = text.trim();
-      sessionStorage.setItem("kyosk-otp", text);
       console.log("Clipboard updated with OTP:", text.trim());
     }
   } catch (err) {
@@ -74,10 +82,10 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // **Clear clipboard on page load**
-//window.addEventListener("DOMContentLoaded", clearClipboard);
+window.addEventListener("DOMContentLoaded", clearClipboard);
 
 // **Clear clipboard on page refresh or exit**
-//window.addEventListener("beforeunload", clearClipboard);
+window.addEventListener("beforeunload", clearClipboard);
 
 // Initial start
 clipboardInterval = setInterval(checkClipboardChanges, 2000);

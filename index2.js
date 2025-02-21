@@ -74,10 +74,10 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // **Clear clipboard on page load**
-window.addEventListener("DOMContentLoaded", clearClipboard);
+//window.addEventListener("DOMContentLoaded", clearClipboard);
 
 // **Clear clipboard on page refresh or exit**
-window.addEventListener("beforeunload", clearClipboard);
+//window.addEventListener("beforeunload", clearClipboard);
 
 // Initial start
 clipboardInterval = setInterval(checkClipboardChanges, 2000);

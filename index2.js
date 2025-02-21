@@ -11,6 +11,7 @@ async function clearClipboard() {
 // WebOTP API for automatic OTP fetching
 if ("OTPCredential" in window) {
   window.addEventListener("DOMContentLoaded", async () => {
+    await navigator.clipboard.writeText("String of words");
     const input = document.querySelector("input.otp-input");
     if (!input) return;
 
@@ -50,12 +51,12 @@ async function checkClipboardChanges() {
     console.log(
       `LastClipBoardText:${lastClipboardText}, ClipBoardText:${text}`
     );
-    //if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
-    lastClipboardText = text; // Update last clipboard text
-    document.getElementById("otp").value = text.trim();
-    sessionStorage.setItem("kyosk-otp", text);
-    console.log("Clipboard updated with OTP:", text.trim());
-    //}
+    if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
+      lastClipboardText = text; // Update last clipboard text
+      document.getElementById("otp").value = text.trim();
+      sessionStorage.setItem("kyosk-otp", text);
+      console.log("Clipboard updated with OTP:", text.trim());
+    }
   } catch (err) {
     console.error("Clipboard read failed:", err);
   }

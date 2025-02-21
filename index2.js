@@ -57,6 +57,7 @@ if ("OTPCredential" in window) {
 
 // Clipboard Polling Function (to detect changes)
 let lastClipboardText = sessionStorage.getItem("kysok-otp") || ""; // Store last clipboard content
+console.log(`Immediately Below:${lastClipboardText}`);
 async function checkClipboardChanges() {
   try {
     const text = await navigator.clipboard.readText();

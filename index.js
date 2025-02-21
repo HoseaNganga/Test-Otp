@@ -58,11 +58,11 @@ let lastClipboardText = ""; // Store last clipboard content
 async function checkClipboardChanges() {
   try {
     const text = await navigator.clipboard.readText();
-    if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
-      lastClipboardText = text; // Update last clipboard text
-      document.getElementById("otp").value = text.trim();
-      console.log("Clipboard updated with OTP:", text.trim());
-    }
+    //if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
+    lastClipboardText = text; // Update last clipboard text
+    document.getElementById("otp").value = text.trim();
+    console.log("Clipboard updated with OTP:", text.trim());
+    //}
   } catch (err) {
     console.error("Clipboard read failed:", err);
   }

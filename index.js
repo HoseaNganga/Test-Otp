@@ -1,3 +1,13 @@
+// Function to clear clipboard
+async function clearClipboard() {
+  try {
+    await navigator.clipboard.writeText(""); // Overwrite clipboard with an empty string
+    console.log("Clipboard cleared on page load/exit.");
+  } catch (err) {
+    console.error("Failed to clear clipboard:", err);
+  }
+}
+
 // Function to fetch OTP from clipboard and populate the input field
 async function fetchOTPFromClipboard() {
   try {
@@ -63,56 +73,16 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     clipboardInterval = setInterval(checkClipboardChanges, 2000); // Check clipboard every 2 seconds
   } else {
-    clearInterval(clipboardInterval); // Stop polling when page is inactive
+    clearInterval(clipboardInterval);
+    // Stop polling when page is inactive
   }
 });
 
+// **Clear clipboard on page load**
+window.addEventListener("DOMContentLoaded", clearClipboard);
+
+// **Clear clipboard on page refresh or exit**
+window.addEventListener("beforeunload", clearClipboard);
+
 // Initial start
 clipboardInterval = setInterval(checkClipboardChanges, 2000);
-
-/* async function fetchOTPFromClipboard() {
-  try {
-    const text = await navigator.clipboard.readText();
-    if (text && /^\d{4,6}$/.test(text.trim())) {
-      // Ensure it's a valid OTP format (4-6 digits)
-      let otp_test = (document.getElementById("otp").value = text.trim());
-      console.log(otp_test);
-    } else {
-      alert("No valid OTP found in clipboard.");
-    }
-  } catch (err) {
-    console.error("Clipboard read failed:", err);
-    alert("Failed to read from clipboard. Please allow clipboard access.");
-  }
-}
-
-// WebOTP API for automatic OTP filling
-if ("OTPCredential" in window) {
-  window.addEventListener("DOMContentLoaded", async () => {
-    const input = document.querySelector('input[autocomplete="one-time-code"]');
-    if (!input) return;
-
-    const ac = new AbortController();
-    const form = input.closest("form");
-
-    if (form) {
-      form.addEventListener("submit", () => ac.abort());
-    }
-
-    try {
-      const otp = await navigator.credentials.get({
-        otp: { transport: ["sms"] },
-        signal: ac.signal,
-      });
-
-      if (otp) {
-        input.value = otp.code;
-        await navigator.clipboard.writeText(otp.code); // Copy OTP to Clipboard
-        if (form) form.submit();
-      }
-    } catch (err) {
-      console.error("WebOTP failed:", err);
-    }
-  });
-}
- */

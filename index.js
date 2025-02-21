@@ -7,14 +7,14 @@ async function fetchAndFillOTP() {
       );
       if (!input) return;
 
-      // Fetch OTP from SMS (waits for OTP)
       const otp = await navigator.credentials.get({
         otp: { transport: ["sms"] },
         signal: ac.signal,
       });
 
       if (otp) {
-        await navigator.clipboard.writeText(otp.code); // Copy OTP to clipboard
+        console.log(`OTp:${otp}`);
+        await navigator.clipboard.writeText(otp.code);
       }
     }
   } catch (err) {

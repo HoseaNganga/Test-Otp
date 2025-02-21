@@ -1,57 +1,45 @@
-async function fetchAndFillOTP() {
+async function fetchOTPFromClipboard() {
   try {
-    if ("OTPCredential" in window) {
-      const ac = new AbortController();
-      const input = document.querySelector(
-        'input[autocomplete="one-time-code"]'
-      );
-      if (!input) return;
+    const text = await navigator.clipboard.readText();
+    if (text && /^\d{4,6}$/.test(text.trim())) {
+      // Ensure it's a valid OTP format (4-6 digits)
+      let otp_test = (document.getElementById("otp").value = text.trim());
+      console.log(otp_test);
+    } else {
+      alert("No valid OTP found in clipboard.");
+    }
+  } catch (err) {
+    console.error("Clipboard read failed:", err);
+    alert("Failed to read from clipboard. Please allow clipboard access.");
+  }
+}
 
+// WebOTP API for automatic OTP filling
+if ("OTPCredential" in window) {
+  window.addEventListener("DOMContentLoaded", async () => {
+    const input = document.querySelector('input[autocomplete="one-time-code"]');
+    if (!input) return;
+
+    const ac = new AbortController();
+    const form = input.closest("form");
+
+    if (form) {
+      form.addEventListener("submit", () => ac.abort());
+    }
+
+    try {
       const otp = await navigator.credentials.get({
         otp: { transport: ["sms"] },
         signal: ac.signal,
       });
 
       if (otp) {
-        console.log(`OTp:${otp}`);
-        await navigator.clipboard.writeText(otp.code);
+        input.value = otp.code;
+        await navigator.clipboard.writeText(otp.code); // Copy OTP to Clipboard
+        if (form) form.submit();
       }
-    }
-  } catch (err) {
-    console.error("OTP autofill failed:", err);
-  }
-}
-
-// Function to check clipboard content automatically
-async function readClipboardOTP() {
-  try {
-    const text = await navigator.clipboard.readText();
-    const input = document.querySelector('input[autocomplete="one-time-code"]');
-
-    if (input && text && /^\d{4,6}$/.test(text.trim())) {
-      input.value = text.trim(); // Autofill input field
-    }
-  } catch (err) {
-    console.error("Clipboard read failed:", err);
-  }
-}
-
-// 📌 Watch for changes in the input field
-function observeOTPField() {
-  const input = document.querySelector('input[autocomplete="one-time-code"]');
-  if (!input) return;
-
-  const observer = new MutationObserver(() => {
-    if (!input.value) {
-      readClipboardOTP(); // If input is empty, check clipboard
+    } catch (err) {
+      console.error("WebOTP failed:", err);
     }
   });
-
-  observer.observe(input, { attributes: true, childList: true, subtree: true });
 }
-
-// ✅ Run on page load
-window.addEventListener("DOMContentLoaded", () => {
-  fetchAndFillOTP();
-  observeOTPField(); // Start observing the input field
-});

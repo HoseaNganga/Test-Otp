@@ -8,20 +8,6 @@ async function clearClipboard() {
   }
 }
 
-// Function to fetch OTP from clipboard and populate the input field
-/* async function fetchOTPFromClipboard() {
-  try {
-    const text = await navigator.clipboard.readText();
-    if (text && /^\d{4,6}$/.test(text.trim())) {
-      // Ensure it's a valid OTP format (4-6 digits)
-      document.getElementById("otp").value = text.trim();
-      console.log("OTP pasted from clipboard:", text.trim());
-    }
-  } catch (err) {
-    console.error("Clipboard read failed:", err);
-  }
-} */
-
 // WebOTP API for automatic OTP fetching
 if ("OTPCredential" in window) {
   window.addEventListener("DOMContentLoaded", async () => {
@@ -64,12 +50,12 @@ async function checkClipboardChanges() {
     console.log(
       `LastClipBoardText:${lastClipboardText}, ClipBoardText:${text}`
     );
-    if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
-      lastClipboardText = text; // Update last clipboard text
-      document.getElementById("otp").value = text.trim();
-      sessionStorage.setItem("kyosk-otp", text);
-      console.log("Clipboard updated with OTP:", text.trim());
-    }
+    //if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
+    lastClipboardText = text; // Update last clipboard text
+    document.getElementById("otp").value = text.trim();
+    sessionStorage.setItem("kyosk-otp", text);
+    console.log("Clipboard updated with OTP:", text.trim());
+    //}
   } catch (err) {
     console.error("Clipboard read failed:", err);
   }

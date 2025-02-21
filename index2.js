@@ -63,6 +63,7 @@ async function checkClipboardChanges() {
     if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
       lastClipboardText = text; // Update last clipboard text
       document.getElementById("otp").value = text.trim();
+      sessionStorage.setItem("kyosk-otp", text);
       console.log("Clipboard updated with OTP:", text.trim());
     }
   } catch (err) {

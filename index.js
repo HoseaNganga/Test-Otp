@@ -1,6 +1,5 @@
 async function fetchAndFillOTP() {
   try {
-    // Step 1: Check if WebOTP API is available
     if ("OTPCredential" in window) {
       const ac = new AbortController();
       const input = document.querySelector(
@@ -8,23 +7,14 @@ async function fetchAndFillOTP() {
       );
       if (!input) return;
 
-      // Fetch OTP from SMS
+      // Fetch OTP from SMS (waits for OTP)
       const otp = await navigator.credentials.get({
         otp: { transport: ["sms"] },
         signal: ac.signal,
       });
 
       if (otp) {
-        // Step 2: Copy OTP to clipboard
-        await navigator.clipboard.writeText(otp.code);
-
-        // Step 3: Read OTP from clipboard
-        const copiedOTP = await navigator.clipboard.readText();
-
-        // Step 4: Autofill input field
-        if (copiedOTP && /^\d{4,6}$/.test(copiedOTP.trim())) {
-          input.value = copiedOTP.trim();
-        }
+        await navigator.clipboard.writeText(otp.code); // Copy OTP to clipboard
       }
     }
   } catch (err) {
@@ -32,7 +22,36 @@ async function fetchAndFillOTP() {
   }
 }
 
-// Run automatically on page load
-window.addEventListener("DOMContentLoaded", fetchAndFillOTP);
+// Function to check clipboard content automatically
+async function readClipboardOTP() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const input = document.querySelector('input[autocomplete="one-time-code"]');
 
-setInterval(fetchAndFillOTP, 10000); // Runs every 10 seconds
+    if (input && text && /^\d{4,6}$/.test(text.trim())) {
+      input.value = text.trim(); // Autofill input field
+    }
+  } catch (err) {
+    console.error("Clipboard read failed:", err);
+  }
+}
+
+// 📌 Watch for changes in the input field
+function observeOTPField() {
+  const input = document.querySelector('input[autocomplete="one-time-code"]');
+  if (!input) return;
+
+  const observer = new MutationObserver(() => {
+    if (!input.value) {
+      readClipboardOTP(); // If input is empty, check clipboard
+    }
+  });
+
+  observer.observe(input, { attributes: true, childList: true, subtree: true });
+}
+
+// ✅ Run on page load
+window.addEventListener("DOMContentLoaded", () => {
+  fetchAndFillOTP();
+  observeOTPField(); // Start observing the input field
+});

@@ -11,6 +11,35 @@ const log = {
   otp: (msg) => console.log(`🔢 ${msg}`)
 };
 
+// Form submission helper
+const submitForm = (input, otp) => {
+  const form = input.closest('form');
+  if (!form) {
+    log.error("Form not found!");
+    return;
+  }
+
+  // Set the input value
+  input.value = otp;
+  log.success(`Set input value to: ${otp}`);
+
+  // Create and dispatch input event
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  log.info("Dispatched input event");
+
+  // Find the submit button
+  const submitButton = form.querySelector('button[type="submit"]');
+  if (submitButton) {
+    log.info("Found submit button, clicking it");
+    submitButton.click();
+  } else {
+    log.info("Submit button not found, submitting form directly");
+    form.submit();
+  }
+  
+  log.success("Form submitted! 🎉");
+};
+
 // Enhanced clipboard management class
 class ClipboardManager {
   constructor() {
@@ -127,38 +156,23 @@ class OTPHandler {
 
     log.info("📱 Setting up WebOTP API");
     this.abortController = new AbortController();
-    const form = input.closest("form");
-
-    if (form) {
-      form.addEventListener("submit", () => {
-        log.info("Form submitted, aborting OTP detection");
-        this.abortController.abort();
-      });
-    }
 
     try {
       log.info("🔄 Waiting for SMS OTP...");
-      
-      // Log when the permission prompt appears
-      log.info("🔔 WebOTP permission prompt should appear now");
+      log.info("🔔 WebOTP permission prompt should appear when SMS arrives");
       
       const otpCredential = await navigator.credentials.get({
         otp: { transport: ["sms"] },
         signal: this.abortController.signal,
       });
 
-      // Log immediately after user interaction
       log.info("👆 User responded to WebOTP prompt");
 
       if (otpCredential) {
         log.success(`🎯 WebOTP credential received: ${JSON.stringify(otpCredential)}`);
         log.otp(`Received OTP code: ${otpCredential.code}`);
         
-        // Update input value
-        input.value = otpCredential.code;
-        log.info("📝 Updated input field with OTP");
-
-        // Update clipboard
+        // Copy to clipboard
         try {
           await navigator.clipboard.writeText(otpCredential.code);
           log.success("📋 Copied OTP to clipboard");
@@ -166,14 +180,12 @@ class OTPHandler {
           log.error(`Failed to copy to clipboard: ${clipErr.message}`);
         }
 
-        // Update session storage
+        // Store in session
         sessionStorage.setItem("kyosk-otp", otpCredential.code);
         log.info("💾 Saved OTP to session storage");
 
-        if (form) {
-          log.info("📤 Submitting form with OTP");
-          form.submit();
-        }
+        // Submit form with OTP
+        submitForm(input, otpCredential.code);
       } else {
         log.warning("⚠️ No OTP credential received after permission granted");
       }

@@ -21,6 +21,17 @@ function fillOTPInput(otp) {
   }
 }
 
+// Function to clear clipboard
+async function clearClipboard() {
+  try {
+      // Write empty string to clipboard
+      await navigator.clipboard.writeText('');
+      console.log('Clipboard cleared');
+  } catch (error) {
+      console.log('Failed to clear clipboard:', error);
+  }
+}
+
 // Setup clipboard listener
 async function setupClipboardListener() {
   try {
@@ -61,10 +72,16 @@ function setupMessageListener() {
   });
 }
 
-// Initialize both listeners
+// Initialize event listeners and clear clipboard on page load
 document.addEventListener('DOMContentLoaded', () => {
+  clearClipboard(); // Clear clipboard when page loads
   setupClipboardListener();
   setupMessageListener();
+});
+
+// Clear clipboard before leaving the page
+window.addEventListener('beforeunload', () => {
+  clearClipboard();
 });
 
 // Also setup clipboard paste event listener as fallback

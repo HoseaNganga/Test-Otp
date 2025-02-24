@@ -125,6 +125,7 @@ class OTPHandler {
       return;
     }
 
+    log.info("📱 Setting up WebOTP API");
     this.abortController = new AbortController();
     const form = input.closest("form");
 
@@ -137,24 +138,54 @@ class OTPHandler {
 
     try {
       log.info("🔄 Waiting for SMS OTP...");
-      const otp = await navigator.credentials.get({
+      
+      // Log when the permission prompt appears
+      log.info("🔔 WebOTP permission prompt should appear now");
+      
+      const otpCredential = await navigator.credentials.get({
         otp: { transport: ["sms"] },
         signal: this.abortController.signal,
       });
 
-      if (otp) {
-        log.success(`OTP received: ${otp.code}`);
-        input.value = otp.code;
-        await navigator.clipboard.writeText(otp.code);
-        sessionStorage.setItem("kyosk-otp", otp.code);
+      // Log immediately after user interaction
+      log.info("👆 User responded to WebOTP prompt");
+
+      if (otpCredential) {
+        log.success(`🎯 WebOTP credential received: ${JSON.stringify(otpCredential)}`);
+        log.otp(`Received OTP code: ${otpCredential.code}`);
+        
+        // Update input value
+        input.value = otpCredential.code;
+        log.info("📝 Updated input field with OTP");
+
+        // Update clipboard
+        try {
+          await navigator.clipboard.writeText(otpCredential.code);
+          log.success("📋 Copied OTP to clipboard");
+        } catch (clipErr) {
+          log.error(`Failed to copy to clipboard: ${clipErr.message}`);
+        }
+
+        // Update session storage
+        sessionStorage.setItem("kyosk-otp", otpCredential.code);
+        log.info("💾 Saved OTP to session storage");
+
         if (form) {
-          log.info("Submitting form with OTP");
+          log.info("📤 Submitting form with OTP");
           form.submit();
         }
+      } else {
+        log.warning("⚠️ No OTP credential received after permission granted");
       }
     } catch (err) {
-      if (err.name !== "AbortError") {
-        log.error(`WebOTP error: ${err.message}`);
+      if (err.name === "AbortError") {
+        log.info("🛑 OTP detection aborted");
+      } else if (err.name === "NotAllowedError") {
+        log.warning("🚫 User denied WebOTP permission");
+      } else if (err.name === "InvalidStateError") {
+        log.error("❌ WebOTP API in invalid state. Make sure you're using HTTPS");
+      } else {
+        log.error(`WebOTP error: ${err.name} - ${err.message}`);
       }
     }
   }

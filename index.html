@@ -2,28 +2,24 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="OTP Test" />
 </head>
+
 <body>
-  <h1>OTP TEST:  <span id="date"></span></h1>
+  <h1>OTP TEST: <span id="date"></span></h1>
 
   <div class="otp-area">
     <form action="" method="POST">
       <label for="otp">Enter OTP:</label>
-      <input
-        type="text"
-        id="otp"
-        autocomplete="one-time-code"
-        inputmode="numeric"
-        required
-        class="otp-input"
-      />
+      <input type="text" id="otp" data-testid="otp-input" autocomplete="one-time-code" inputmode="numeric" required
+        class="otp-input" />
       <button type="submit">Verify</button>
     </form>
   </div>
 
   <script src="index2.js"></script>
   <script>
-    const currentDateAndTime = "version XIV"
+    const currentDateAndTime = "version XV"
     document.getElementById("date").innerHTML = currentDateAndTime
   </script>
 </body>

@@ -34,13 +34,16 @@ const submitForm = (input, otp) => {
   const submitButton = form.querySelector('button[type="submit"]');
   if (submitButton) {
     log.info("Found submit button, clicking it");
-    submitButton.click();
+    setTimeout(() => {
+      submitButton.click();
+      log.success("Button clicked!");
+    }, 100);
   } else {
     log.info("Submit button not found, submitting form directly");
     form.submit();
   }
   
-  log.success("Form submitted! 🎉");
+  log.success("Form submission process complete! 🎉");
 };
 
 // WebOTP API handler
@@ -72,16 +75,26 @@ class OTPHandler {
       log.info("🔔 WebOTP permission prompt should appear when SMS arrives");
       
       const otpCredential = await navigator.credentials.get({
-        otp: { transport: ["sms"] },
-        signal: this.abortController.signal,
+        otp: {
+          transport: ["sms"],
+          // Adding specific format for the OTP message
+          separator: "\n"
+        },
+        signal: this.abortController.signal
       });
 
       log.info("👆 User responded to WebOTP prompt");
-      log.info("Checking OTP credential...");
+      log.info("Checking OTP credential...", otpCredential);
+
+      // Log the full credential object for debugging
+      try {
+        log.info("Full credential object: " + JSON.stringify(otpCredential, null, 2));
+      } catch (e) {
+        log.info("Credential object (non-stringified):", otpCredential);
+      }
 
       if (otpCredential && otpCredential.code) {
-        log.success(`🎯 WebOTP credential received: ${JSON.stringify(otpCredential)}`);
-        log.otp(`Received OTP code: ${otpCredential.code}`);
+        log.success(`🎯 WebOTP credential received with code: ${otpCredential.code}`);
         
         // Verify input element is still available
         const otpInput = document.querySelector("input.otp-input") || document.getElementById("otp");
@@ -93,6 +106,10 @@ class OTPHandler {
         // Set value directly first
         otpInput.value = otpCredential.code;
         log.success(`✅ Set input value directly to: ${otpCredential.code}`);
+        
+        // Focus the input
+        otpInput.focus();
+        log.info("Input focused");
         
         // Try to copy to clipboard
         try {
@@ -106,8 +123,10 @@ class OTPHandler {
         sessionStorage.setItem("kyosk-otp", otpCredential.code);
         log.info("💾 Saved OTP to session storage");
 
-        // Submit form with OTP
-        submitForm(otpInput, otpCredential.code);
+        // Submit form with OTP after a small delay
+        setTimeout(() => {
+          submitForm(otpInput, otpCredential.code);
+        }, 200);
       } else {
         log.warning("⚠️ No OTP credential received after permission granted");
         if (otpCredential) {

@@ -13,6 +13,8 @@ const log = {
 
 // Form submission helper
 const submitForm = (input, otp) => {
+  log.info(`Attempting to submit form with OTP: ${otp}`);
+  
   const form = input.closest('form');
   if (!form) {
     log.error("Form not found!");
@@ -25,7 +27,8 @@ const submitForm = (input, otp) => {
 
   // Create and dispatch input event
   input.dispatchEvent(new Event('input', { bubbles: true }));
-  log.info("Dispatched input event");
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  log.info("Dispatched input and change events");
 
   // Find the submit button
   const submitButton = form.querySelector('button[type="submit"]');
@@ -40,104 +43,9 @@ const submitForm = (input, otp) => {
   log.success("Form submitted! 🎉");
 };
 
-// Enhanced clipboard management class
-class ClipboardManager {
-  constructor() {
-    this.lastClipboardText = sessionStorage.getItem("kyosk-otp") || "";
-    this.clipboardInterval = null;
-    this.isPolling = false;
-    this.pollCount = 0;
-    log.info("ClipboardManager initialized");
-  }
-
-  async clearClipboard() {
-    try {
-      await navigator.clipboard.writeText("");
-      log.success("Clipboard cleared successfully");
-    } catch (err) {
-      log.warning(`Failed to clear clipboard: ${err.message}`);
-    }
-  }
-
-  async readClipboard() {
-    try {
-      // Request clipboard permission if needed
-      const permission = await navigator.permissions.query({ name: "clipboard-read" });
-      log.info(`Clipboard permission status: ${permission.state}`);
-      
-      if (permission.state === "denied") {
-        throw new Error("Clipboard permission denied");
-      }
-      
-      const text = await navigator.clipboard.readText();
-      log.clipboard(`Read from clipboard: ${text ? (text.length > 0 ? text : '(empty)') : '(null)'}`);
-      return text;
-    } catch (err) {
-      log.error(`Clipboard read failed: ${err.message}`);
-      return null;
-    }
-  }
-
-  async checkClipboardChanges() {
-    this.pollCount++;
-    log.info(`Polling clipboard (count: ${this.pollCount}) 🔄`);
-
-    const otpInput = document.getElementById("otp");
-    if (!otpInput) {
-      log.warning("OTP input element not found");
-      return;
-    }
-
-    // Ensure input is focused for clipboard operations
-    if (document.activeElement !== otpInput) {
-      log.info("Focusing OTP input");
-      otpInput.focus();
-    }
-
-    const text = await this.readClipboard();
-    if (!text) {
-      log.info("No text in clipboard");
-      return;
-    }
-
-    log.clipboard(`Current clipboard text: ${text}`);
-    log.clipboard(`Last clipboard text: ${this.lastClipboardText}`);
-
-    if (text !== this.lastClipboardText && isValidOTP(text)) {
-      this.lastClipboardText = text;
-      otpInput.value = text.trim();
-      sessionStorage.setItem("kyosk-otp", text);
-      log.success(`Valid OTP updated from clipboard: ${text.trim()}`);
-    } else if (text !== this.lastClipboardText) {
-      log.warning(`Invalid OTP format in clipboard: ${text}`);
-    }
-  }
-
-  startPolling() {
-    if (this.isPolling) {
-      log.info("Polling already active");
-      return;
-    }
-    
-    this.isPolling = true;
-    this.clipboardInterval = setInterval(() => this.checkClipboardChanges(), 2000);
-    log.success("📊 Clipboard polling started");
-  }
-
-  stopPolling() {
-    if (this.clipboardInterval) {
-      clearInterval(this.clipboardInterval);
-      this.clipboardInterval = null;
-    }
-    this.isPolling = false;
-    log.info("🛑 Clipboard polling stopped");
-  }
-}
-
 // WebOTP API handler
 class OTPHandler {
-  constructor(clipboardManager) {
-    this.clipboardManager = clipboardManager;
+  constructor() {
     this.abortController = null;
     log.info("OTPHandler initialized");
   }
@@ -148,11 +56,13 @@ class OTPHandler {
       return;
     }
 
-    const input = document.querySelector("input.otp-input");
+    // Try both selectors to find the input
+    const input = document.querySelector("input.otp-input") || document.getElementById("otp");
     if (!input) {
-      log.warning("OTP input element not found");
+      log.error("❌ OTP input element not found. Checked both .otp-input and #otp");
       return;
     }
+    log.success(`✅ Found OTP input element: ${input.id || input.className}`);
 
     log.info("📱 Setting up WebOTP API");
     this.abortController = new AbortController();
@@ -167,12 +77,24 @@ class OTPHandler {
       });
 
       log.info("👆 User responded to WebOTP prompt");
+      log.info("Checking OTP credential...");
 
-      if (otpCredential) {
+      if (otpCredential && otpCredential.code) {
         log.success(`🎯 WebOTP credential received: ${JSON.stringify(otpCredential)}`);
         log.otp(`Received OTP code: ${otpCredential.code}`);
         
-        // Copy to clipboard
+        // Verify input element is still available
+        const otpInput = document.querySelector("input.otp-input") || document.getElementById("otp");
+        if (!otpInput) {
+          log.error("❌ Input element not found when trying to set OTP!");
+          return;
+        }
+        
+        // Set value directly first
+        otpInput.value = otpCredential.code;
+        log.success(`✅ Set input value directly to: ${otpCredential.code}`);
+        
+        // Try to copy to clipboard
         try {
           await navigator.clipboard.writeText(otpCredential.code);
           log.success("📋 Copied OTP to clipboard");
@@ -185,9 +107,12 @@ class OTPHandler {
         log.info("💾 Saved OTP to session storage");
 
         // Submit form with OTP
-        submitForm(input, otpCredential.code);
+        submitForm(otpInput, otpCredential.code);
       } else {
         log.warning("⚠️ No OTP credential received after permission granted");
+        if (otpCredential) {
+          log.warning(`Credential object without code: ${JSON.stringify(otpCredential)}`);
+        }
       }
     } catch (err) {
       if (err.name === "AbortError") {
@@ -198,36 +123,17 @@ class OTPHandler {
         log.error("❌ WebOTP API in invalid state. Make sure you're using HTTPS");
       } else {
         log.error(`WebOTP error: ${err.name} - ${err.message}`);
+        log.error(`Error details: ${err.stack}`);
       }
     }
   }
 }
 
 // Initialize and setup
-const clipboardManager = new ClipboardManager();
-const otpHandler = new OTPHandler(clipboardManager);
-
-// Event listeners
-document.addEventListener("visibilitychange", () => {
-  log.info(`Page visibility changed: ${document.visibilityState}`);
-  if (document.visibilityState === "visible") {
-    clipboardManager.startPolling();
-  } else {
-    clipboardManager.stopPolling();
-  }
-});
+const otpHandler = new OTPHandler();
 
 // Setup on page load
 window.addEventListener("DOMContentLoaded", async () => {
   log.info("🚀 Page loaded, initializing OTP system");
-  await clipboardManager.clearClipboard();
   await otpHandler.initialize();
-  clipboardManager.startPolling();
-});
-
-// Cleanup on page unload
-window.addEventListener("beforeunload", () => {
-  log.info("📤 Page unloading, cleaning up");
-  clipboardManager.stopPolling();
-  clipboardManager.clearClipboard();
 });

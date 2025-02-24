@@ -41,6 +41,7 @@ if ("OTPCredential" in window) {
         signal: ac.signal,
       });
       console.log(otp);
+      alert('Otp is available', otp)
       if (otp) {
         console.log(otp);
         input.value = otp.code;
@@ -60,8 +61,9 @@ let lastClipboardText = sessionStorage.getItem("kysok-otp") || ""; // Store last
 async function checkClipboardChanges() {
   try {
     const text = await navigator.clipboard.readText();
+    alert("Clipboard changes detected", text);
     if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
-      lastClipboardText = text; // Update last clipboard text
+      lastClipboardText = text;
       document.getElementById("otp").value = text.trim();
       sessionStorage.setItem("kyosk-otp", text);
       console.log("Clipboard updated with OTP:", text.trim());

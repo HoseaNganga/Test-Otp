@@ -41,7 +41,6 @@ if ("OTPCredential" in window) {
         signal: ac.signal,
       });
       console.log(otp);
-      alert('Otp is available', otp)
       if (otp) {
         console.log(otp);
         input.value = otp.code;
@@ -60,11 +59,9 @@ if ("OTPCredential" in window) {
 let lastClipboardText = sessionStorage.getItem("kysok-otp") || ""; // Store last clipboard content
 async function checkClipboardChanges() {
   try {
-    await checkOtp()
     const text = await navigator.clipboard.readText();
-    alert("Clipboard changes detected text is", text);
     if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
-      lastClipboardText = text;
+      lastClipboardText = text; // Update last clipboard text
       document.getElementById("otp").value = text.trim();
       sessionStorage.setItem("kyosk-otp", text);
       console.log("Clipboard updated with OTP:", text.trim());
@@ -72,41 +69,6 @@ async function checkClipboardChanges() {
   } catch (err) {
     console.error("Clipboard read failed:", err);
   }
-}
-
-async function checkOtp() {
-  const input = document.querySelector("input.otp-input");
-  if (!input) return;
-
-  const ac = new AbortController();
-  const form = input.closest("form");
-
-  if (form) {
-    form.addEventListener("submit", () => ac.abort());
-  }
-
-  try {
-    const otp = await navigator.credentials.get({
-      otp: { transport: ["sms"] },
-      signal: ac.signal,
-    });
-    console.log(otp);
-    alert('Otp is available', otp)
-    if (otp) {
-      console.log(otp);
-      input.value = otp.code;
-      await navigator.clipboard.writeText(otp.code); // Copy OTP to clipboard
-      const text = await navigator.clipboard.readText();
-      sessionStorage.setItem("kyosk-otp", text);
-      if (form) form.submit();
-    }
-  } catch (err) {
-    console.error("WebOTP failed:", err);
-  }
-}
-
-async function trackChanges(){
-  await checkClipboardChanges()
 }
 
 // Start polling clipboard when page is active

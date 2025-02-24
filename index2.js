@@ -61,7 +61,7 @@ let lastClipboardText = sessionStorage.getItem("kysok-otp") || ""; // Store last
 async function checkClipboardChanges() {
   try {
     const text = await navigator.clipboard.readText();
-    alert("Clipboard changes detected", text);
+    alert("Clipboard changes detected", lastClipboardText);
     if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
       lastClipboardText = text;
       document.getElementById("otp").value = text.trim();

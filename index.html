@@ -1,26 +1,171 @@
 <!DOCTYPE html>
-
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="referrer" content="no-referrer">
-  <meta name="description" content="OTP Test" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OTP Test">
+    <meta name="format-detection" content="telephone=no">
+    <!-- Replace with your actual site verification -->
+    <meta name="google-site-verification" content="your-site-verification">
+    <!-- Security headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta name="referrer" content="no-referrer">
+    <title>OTP Test</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --hover-color: #45a049;
+            --error-color: #f44336;
+            --background-color: #f9f9f9;
+            --input-border: #ddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .otp-area {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .otp-input {
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid var(--input-border);
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .otp-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: var(--hover-color);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        #date {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        /* Status messages */
+        .status-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+
+        .status-message.success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+
+        .status-message.error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+
+        /* Responsive design */
+        @media (max-width: 480px) {
+            .otp-area {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .otp-input {
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
-
 <body>
-  <h1>OTP TEST: <span id="date"></span></h1>
+    <h1>OTP TEST: <span id="date"></span></h1>
 
-  <div class="otp-area">
-    <form action="" method="POST">
-      <label for="otp">Enter OTP:</label>
-      <input type="text" id="otp" data-testid="otp-input" autocomplete="one-time-code" inputmode="numeric" required
-        class="otp-input" />
-      <button type="submit">Verify</button>
-    </form>
-  </div>
+    <div class="otp-area">
+        <form action="" method="POST" id="otpForm">
+            <label for="otp">Enter OTP:</label>
+            <input 
+                type="text" 
+                id="otp" 
+                data-testid="otp-input" 
+                autocomplete="one-time-code"
+                inputmode="numeric"
+                pattern="\d{6}"
+                maxlength="6"
+                required
+                class="otp-input"
+                placeholder="Enter 6-digit code"
+            />
+            <button type="submit">Verify</button>
+        </form>
+        <div id="statusMessage" class="status-message"></div>
+    </div>
 
-  <script src="index2.js"></script>
-  <script>
-    const currentDateAndTime = "version XVII"
-    document.getElementById("date").innerHTML = currentDateAndTime
-  </script>
+    <script src="index2.js"></script>
+    <script>
+        const currentDateAndTime = "version XVIII"
+        document.getElementById("date").innerHTML = currentDateAndTime;
+    </script>
 </body>
+</html>

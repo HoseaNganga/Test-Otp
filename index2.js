@@ -1,4 +1,5 @@
-// Function to clear clipboard
+const input = document.querySelector("input.otp-input");
+
 async function clearClipboard() {
   try {
     await navigator.clipboard.writeText("");
@@ -40,7 +41,6 @@ async function trackChanges() {
   let fetchOtpInterval;
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      fetchOtpInterval = setInterval(fetchOtp, 2000);
       clipboardInterval = setInterval(checkClipboardChanges, 2000);
     } else {
       clearInterval(fetchOtpInterval);
@@ -52,7 +52,7 @@ async function trackChanges() {
 // WebOTP API for automatic OTP fetching
 if ("OTPCredential" in window) {
   window.addEventListener("DOMContentLoaded", async () => {
-    const input = document.querySelector("input.otp-input");
+   
     await clearClipboard()
 
     if (!input) return;
@@ -69,6 +69,7 @@ if ("OTPCredential" in window) {
 async function checkClipboardChanges() {
   setTimeout(async () => {
     try {
+      await fetchOtp()
       const text = await navigator.clipboard.readText();
       console.log("clipboard text=================================>", text)
       document.getElementById("otp").value = text.trim();

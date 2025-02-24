@@ -45,6 +45,7 @@ if ("OTPCredential" in window) {
 let lastClipboardText = sessionStorage.getItem("kysok-otp") || ""; // Store last clipboard content
 async function checkClipboardChanges() {
   try {
+    document.getElementById("otp")?.focus()
     const text = await navigator.clipboard.readText();
     if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
       lastClipboardText = text; // Update last clipboard text

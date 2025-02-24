@@ -64,11 +64,12 @@ if ("OTPCredential" in window) {
   
   });
 }
-t
+
 async function checkClipboardChanges() {
   let lastClipboardText = sessionStorage.getItem("kysok-otp") || "";
   try {
     const text = await navigator.clipboard.readText();
+    console.log("Text", text)
     if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
       document.getElementById("otp").value = text.trim();
       sessionStorage.setItem("kyosk-otp", text);

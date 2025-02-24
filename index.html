@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-  <h1>OTP TEST: V3</h1>
+  <h1>OTP TEST as at <span id="date"></span></h1>
 
   <div class="otp-area">
     <form action="" method="POST">
@@ -23,4 +23,8 @@
   </div>
 
   <script src="index2.js"></script>
+  <script>
+    const currentDateAndTime = new Date().toISOString();
+    document.getElementById("date").innerHTML = currentDateAndTime
+  </script>
 </body>

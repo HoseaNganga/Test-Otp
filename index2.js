@@ -1,8 +1,7 @@
-const input = document.querySelector("input.otp-input");
-
+// Function to clear clipboard
 async function clearClipboard() {
   try {
-    await navigator.clipboard.writeText("");
+    await navigator.clipboard.writeText(""); // Overwrite clipboard with an empty string
     console.log("Clipboard cleared on page load/exit.");
   } catch (err) {
     console.error("Failed to clear clipboard:", err);
@@ -10,6 +9,10 @@ async function clearClipboard() {
 }
 
 async function fetchOtp() {
+  console.log("==========================> Fetching OTP has began")
+  const input = document.querySelector("input.otp-input");
+  if (!input) return;
+  input.focus();
   const ac = new AbortController();
   const form = input.closest("form");
 
@@ -22,9 +25,9 @@ async function fetchOtp() {
       otp: { transport: ["sms"] },
       signal: ac.signal,
     });
+
     if (otp) {
-      console.log("OTP HAS BEEN FOUND =========================>", otp);
-      console.log(otp);
+      console.log("OTP HAS BEEN FOUND =========================>",otp);
       input.value = otp.code;
       await navigator.clipboard.writeText(otp.code); // Copy OTP to clipboard
       const text = await navigator.clipboard.readText();
@@ -36,29 +39,15 @@ async function fetchOtp() {
   }
 }
 
-async function trackChanges() {
-  let clipboardInterval;
-  let fetchOtpInterval;
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      clipboardInterval = setInterval(checkClipboardChanges, 2000);
-    } else {
-      clearInterval(fetchOtpInterval);
-      clearInterval(clipboardInterval);
-    }
-  });
-}
-
 // WebOTP API for automatic OTP fetching
 if ("OTPCredential" in window) {
   window.addEventListener("DOMContentLoaded", async () => {
-   
-    await clearClipboard()
+    const input = document.querySelector("input.otp-input");
 
     if (!input) return;
 
     if (input) {
-      console.log("Input has been found =========================================>");
+      alert("Input has been found");
       await trackChanges()
     }
 
@@ -67,23 +56,41 @@ if ("OTPCredential" in window) {
 }
 
 async function checkClipboardChanges() {
-  const input = document.querySelector("input.otp-input");
-
-    try {
-      input.focus()
-      await fetchOtp()
-      const text = await navigator.clipboard.readText();
-      console.log("clipboard text=================================>", text)
+  console.log("==========================> Tracking clipboard changes has began")
+  let lastClipboardText = sessionStorage.getItem("kysok-otp") || "";
+  try {
+    const text = await navigator.clipboard.readText();
+    console.log("Text from clipboard is =======================================>", text)
+    if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
       document.getElementById("otp").value = text.trim();
       sessionStorage.setItem("kyosk-otp", text);
-      console.log("Clipboard updated with OTP =======================================>:", text.trim());
-
-    } catch (err) {
-      console.error("Clipboard read failed:", err);
+      console.log("Clipboard updated with OTP:", text.trim());
     }
+  } catch (err) {
+    console.error("Clipboard read failed:", err);
+  }
+}
+
+// Start polling clipboard when page is active
+
+
+function trackChanges(){
+  let clipboardInterval;
+  let fetchOtpInterval;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      fetchOtpInterval = setInterval(fetchOtp, 2000);
+      clipboardInterval = setInterval(checkClipboardChanges, 2000);
+    } else {
+      clearInterval(fetchOtpInterval);
+      clearInterval(clipboardInterval);
+    }
+  });
 
 }
 
+// **Clear clipboard on page load**
+window.addEventListener("DOMContentLoaded", clearClipboard);
 
 // **Clear clipboard on page refresh or exit**
 window.addEventListener("beforeunload", clearClipboard);

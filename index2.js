@@ -1,20 +1,32 @@
 // Utility function to check if string is valid OTP
 const isValidOTP = (text) => /^\d{4,6}$/.test(text.trim());
 
+// Logging utility
+const log = {
+  info: (msg) => console.log(`📝 ${msg}`),
+  success: (msg) => console.log(`✅ ${msg}`),
+  warning: (msg) => console.warn(`⚠️ ${msg}`),
+  error: (msg) => console.error(`❌ ${msg}`),
+  clipboard: (msg) => console.log(`📋 ${msg}`),
+  otp: (msg) => console.log(`🔢 ${msg}`)
+};
+
 // Enhanced clipboard management class
 class ClipboardManager {
   constructor() {
     this.lastClipboardText = sessionStorage.getItem("kyosk-otp") || "";
     this.clipboardInterval = null;
     this.isPolling = false;
+    this.pollCount = 0;
+    log.info("ClipboardManager initialized");
   }
 
   async clearClipboard() {
     try {
       await navigator.clipboard.writeText("");
-      console.log("Clipboard cleared successfully");
+      log.success("Clipboard cleared successfully");
     } catch (err) {
-      console.warn("Failed to clear clipboard:", err);
+      log.warning(`Failed to clear clipboard: ${err.message}`);
     }
   }
 
@@ -22,43 +34,65 @@ class ClipboardManager {
     try {
       // Request clipboard permission if needed
       const permission = await navigator.permissions.query({ name: "clipboard-read" });
+      log.info(`Clipboard permission status: ${permission.state}`);
+      
       if (permission.state === "denied") {
         throw new Error("Clipboard permission denied");
       }
       
-      return await navigator.clipboard.readText();
+      const text = await navigator.clipboard.readText();
+      log.clipboard(`Read from clipboard: ${text ? (text.length > 0 ? text : '(empty)') : '(null)'}`);
+      return text;
     } catch (err) {
-      console.warn("Clipboard read failed:", err);
+      log.error(`Clipboard read failed: ${err.message}`);
       return null;
     }
   }
 
   async checkClipboardChanges() {
+    this.pollCount++;
+    log.info(`Polling clipboard (count: ${this.pollCount}) 🔄`);
+
     const otpInput = document.getElementById("otp");
-    if (!otpInput) return;
+    if (!otpInput) {
+      log.warning("OTP input element not found");
+      return;
+    }
 
     // Ensure input is focused for clipboard operations
     if (document.activeElement !== otpInput) {
+      log.info("Focusing OTP input");
       otpInput.focus();
     }
 
     const text = await this.readClipboard();
-    if (!text) return;
+    if (!text) {
+      log.info("No text in clipboard");
+      return;
+    }
+
+    log.clipboard(`Current clipboard text: ${text}`);
+    log.clipboard(`Last clipboard text: ${this.lastClipboardText}`);
 
     if (text !== this.lastClipboardText && isValidOTP(text)) {
       this.lastClipboardText = text;
       otpInput.value = text.trim();
       sessionStorage.setItem("kyosk-otp", text);
-      console.log("OTP updated from clipboard:", text.trim());
+      log.success(`Valid OTP updated from clipboard: ${text.trim()}`);
+    } else if (text !== this.lastClipboardText) {
+      log.warning(`Invalid OTP format in clipboard: ${text}`);
     }
   }
 
   startPolling() {
-    if (this.isPolling) return;
+    if (this.isPolling) {
+      log.info("Polling already active");
+      return;
+    }
     
     this.isPolling = true;
     this.clipboardInterval = setInterval(() => this.checkClipboardChanges(), 2000);
-    console.log("Clipboard polling started");
+    log.success("📊 Clipboard polling started");
   }
 
   stopPolling() {
@@ -67,7 +101,7 @@ class ClipboardManager {
       this.clipboardInterval = null;
     }
     this.isPolling = false;
-    console.log("Clipboard polling stopped");
+    log.info("🛑 Clipboard polling stopped");
   }
 }
 
@@ -76,39 +110,51 @@ class OTPHandler {
   constructor(clipboardManager) {
     this.clipboardManager = clipboardManager;
     this.abortController = null;
+    log.info("OTPHandler initialized");
   }
 
   async initialize() {
     if (!("OTPCredential" in window)) {
-      console.log("WebOTP not supported");
+      log.warning("WebOTP not supported in this browser");
       return;
     }
 
     const input = document.querySelector("input.otp-input");
-    if (!input) return;
+    if (!input) {
+      log.warning("OTP input element not found");
+      return;
+    }
 
     this.abortController = new AbortController();
     const form = input.closest("form");
 
     if (form) {
-      form.addEventListener("submit", () => this.abortController.abort());
+      form.addEventListener("submit", () => {
+        log.info("Form submitted, aborting OTP detection");
+        this.abortController.abort();
+      });
     }
 
     try {
+      log.info("🔄 Waiting for SMS OTP...");
       const otp = await navigator.credentials.get({
         otp: { transport: ["sms"] },
         signal: this.abortController.signal,
       });
 
       if (otp) {
+        log.success(`OTP received: ${otp.code}`);
         input.value = otp.code;
         await navigator.clipboard.writeText(otp.code);
         sessionStorage.setItem("kyosk-otp", otp.code);
-        if (form) form.submit();
+        if (form) {
+          log.info("Submitting form with OTP");
+          form.submit();
+        }
       }
     } catch (err) {
       if (err.name !== "AbortError") {
-        console.error("WebOTP error:", err);
+        log.error(`WebOTP error: ${err.message}`);
       }
     }
   }
@@ -120,6 +166,7 @@ const otpHandler = new OTPHandler(clipboardManager);
 
 // Event listeners
 document.addEventListener("visibilitychange", () => {
+  log.info(`Page visibility changed: ${document.visibilityState}`);
   if (document.visibilityState === "visible") {
     clipboardManager.startPolling();
   } else {
@@ -129,6 +176,7 @@ document.addEventListener("visibilitychange", () => {
 
 // Setup on page load
 window.addEventListener("DOMContentLoaded", async () => {
+  log.info("🚀 Page loaded, initializing OTP system");
   await clipboardManager.clearClipboard();
   await otpHandler.initialize();
   clipboardManager.startPolling();
@@ -136,6 +184,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 // Cleanup on page unload
 window.addEventListener("beforeunload", () => {
+  log.info("📤 Page unloading, cleaning up");
   clipboardManager.stopPolling();
   clipboardManager.clearClipboard();
 });

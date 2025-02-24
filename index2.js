@@ -21,8 +21,8 @@ async function fetchOtp() {
       otp: { transport: ["sms"] },
       signal: ac.signal,
     });
-    console.log("OTP HAS BEEN FOUND =========================>", otp);
     if (otp) {
+      console.log("OTP HAS BEEN FOUND =========================>", otp);
       console.log(otp);
       input.value = otp.code;
       await navigator.clipboard.writeText(otp.code); // Copy OTP to clipboard
@@ -40,7 +40,7 @@ async function trackChanges() {
   let fetchOtpInterval;
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      // fetchOtpInterval = setInterval(fetchOtp, 2000);
+      fetchOtpInterval = setInterval(fetchOtp, 2000);
       clipboardInterval = setInterval(checkClipboardChanges, 2000);
     } else {
       clearInterval(fetchOtpInterval);

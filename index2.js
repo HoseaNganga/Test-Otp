@@ -67,8 +67,10 @@ if ("OTPCredential" in window) {
 }
 
 async function checkClipboardChanges() {
-  setTimeout(async () => {
+  const input = document.querySelector("input.otp-input");
+
     try {
+      input.focus()
       await fetchOtp()
       const text = await navigator.clipboard.readText();
       console.log("clipboard text=================================>", text)
@@ -79,7 +81,7 @@ async function checkClipboardChanges() {
     } catch (err) {
       console.error("Clipboard read failed:", err);
     }
-  })
+
 }
 
 

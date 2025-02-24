@@ -8,60 +8,68 @@ async function clearClipboard() {
   }
 }
 
-// Function to fetch OTP from clipboard and populate the input field
-/* async function fetchOTPFromClipboard() {
+async function fetchOtp() {
+  const ac = new AbortController();
+  const form = input.closest("form");
+
+  if (form) {
+    form.addEventListener("submit", () => ac.abort());
+  }
+
   try {
-    const text = await navigator.clipboard.readText();
-    if (text && /^\d{4,6}$/.test(text.trim())) {
-      // Ensure it's a valid OTP format (4-6 digits)
-      document.getElementById("otp").value = text.trim();
-      console.log("OTP pasted from clipboard:", text.trim());
+    const otp = await navigator.credentials.get({
+      otp: { transport: ["sms"] },
+      signal: ac.signal,
+    });
+    console.log(otp);
+    if (otp) {
+      console.log(otp);
+      input.value = otp.code;
+      await navigator.clipboard.writeText(otp.code); // Copy OTP to clipboard
+      const text = await navigator.clipboard.readText();
+      sessionStorage.setItem("kyosk-otp", text);
+      if (form) form.submit();
     }
   } catch (err) {
-    console.error("Clipboard read failed:", err);
+    console.error("WebOTP failed:", err);
   }
-} */
+}
+
+async function trackChanges() {
+  let clipboardInterval;
+  let fetchOtpInterval;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      fetchOtpInterval = setInterval(fetchOtp, 2000);
+      clipboardInterval = setInterval(checkClipboardChanges, 2000);
+    } else {
+      clearInterval(fetchOtpInterval);
+      clearInterval(clipboardInterval);
+    }
+  });
+}
 
 // WebOTP API for automatic OTP fetching
 if ("OTPCredential" in window) {
   window.addEventListener("DOMContentLoaded", async () => {
     const input = document.querySelector("input.otp-input");
+    
     if (!input) return;
 
-    const ac = new AbortController();
-    const form = input.closest("form");
-
-    if (form) {
-      form.addEventListener("submit", () => ac.abort());
+    if(input) {
+      alert("Input has been found");
+      await trackChanges()
     }
 
-    try {
-      const otp = await navigator.credentials.get({
-        otp: { transport: ["sms"] },
-        signal: ac.signal,
-      });
-      console.log(otp);
-      if (otp) {
-        console.log(otp);
-        input.value = otp.code;
-        await navigator.clipboard.writeText(otp.code); // Copy OTP to clipboard
-        const text = await navigator.clipboard.readText();
-        sessionStorage.setItem("kyosk-otp", text);
-        if (form) form.submit();
-      }
-    } catch (err) {
-      console.error("WebOTP failed:", err);
-    }
+  
   });
 }
-
-// Clipboard Polling Function (to detect changes)
-let lastClipboardText = sessionStorage.getItem("kysok-otp") || ""; // Store last clipboard content
+t
 async function checkClipboardChanges() {
+  let lastClipboardText = sessionStorage.getItem("kysok-otp") || "";
   try {
     const text = await navigator.clipboard.readText();
     if (text !== lastClipboardText && /^\d{4,6}$/.test(text.trim())) {
-      lastClipboardText = text; // Update last clipboard text
       document.getElementById("otp").value = text.trim();
       sessionStorage.setItem("kyosk-otp", text);
       console.log("Clipboard updated with OTP:", text.trim());

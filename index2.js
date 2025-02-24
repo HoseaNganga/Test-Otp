@@ -63,6 +63,8 @@ async function setupWebOTPAPI() {
               otp: { transport: ['sms'] },
               signal: abortController.signal
           });
+
+          console.log("content is here ==============================>",content);
           
           fillOTPInput(content.code);
           showStatus('OTP received from SMS');
